@@ -4,6 +4,16 @@ using System.Collections;
 public class TriangleMesh : MonoBehaviour {
 	MeshFilter mf;
 	Mesh mesh;
+	Vector3[] vertices;
+	Vector3[] trianglePattern;
+	Vector3[] normals;
+	Vector3[] side1 = new Vector3[1];
+	Vector3[] side2 = new Vector3[1];
+	int[] triangles;
+	float count = 0.1f;
+	float normalx;
+	float normaly;
+	float normalz;
 	// Use this for initialization
 	void Start () {
 
@@ -11,31 +21,28 @@ public class TriangleMesh : MonoBehaviour {
 		mesh = mf.mesh;
 
 		//Vertices
-		Vector3[] vertices = new Vector3[]
-		{
-			//front
-			new Vector3(0,1,1),  //top
-			new Vector3(-1,-1,1), //left bottom front
-			new Vector3(1,-1,1)   //right bottom front
+		trianglePattern = new Vector3[] {
+
+			//Grundmuster
+			new Vector3(0,1,1),  
+			new Vector3(-1,-1,1), 
+			new Vector3(1,-1,1)   
 		};
 
 		//Triangles
-		int[] triangles = new int[]
+		triangles = new int[]
 		{
 			//front 
 			0,1,2//first triangle
 
 		};
 
-		//UVs
-		Vector2[] uvs = new Vector2[]
-		{
-			//front, 0,0 bottom left, 1,1 top right
-			new Vector2(0,1),
-			new Vector2(0,0),
-			new Vector2(1,1),
-			new Vector2(1,0)
-		};
+		//Normals
+		normals = mesh.normals;
+
+		//zu extrudierendes Pattern nach vertices kopieren
+		vertices = new Vector3[trianglePattern.Length];
+		System.Array.Copy (trianglePattern, vertices, trianglePattern.Length);
 
 		mesh.Clear();
 		mesh.vertices = vertices;
@@ -47,8 +54,76 @@ public class TriangleMesh : MonoBehaviour {
 
 	}
 
+	void AddNewVertices() {
+
+		Vector3[] NewVertices = new Vector3[vertices.Length + 3];
+		System.Array.Resize (ref vertices, NewVertices.Length);
+		System.Array.Resize (ref normals, vertices.Length);
+		System.Array.Copy (vertices, NewVertices, NewVertices.Length);
+
+		NewVertices [vertices.Length-3] = new Vector3 (0, 1, 1 + count);
+		NewVertices [vertices.Length-2] = new Vector3 (-1, -1, 1 + count);
+		NewVertices [vertices.Length-1] = new Vector3 (1, -1, 1 + count);
+
+		//Seiten für die Normalenberechnung
+		side1[0] = NewVertices [vertices.Length - 6] - NewVertices[vertices.Length - 3];
+		side2[0] = NewVertices [vertices.Length - 2] - NewVertices[vertices.Length - 3];
+
+		//Kreuzprodukt
+		normalx = (side1 [0].y * side2 [0].z) - (side1 [0].z - side2 [0].y);
+		normaly = (side1 [0].z * side2 [0].x) - (side1 [0].x - side2 [0].z);
+		normalz = (side1 [0].x * side2 [0].y) - (side1 [0].y - side2 [0].x);
+
+		//vertices.Length - 6 ist der start des normals array
+		normals[vertices.Length-6] = new Vector3 (normalx, normaly, normalz ); 
+		normals[vertices.Length-5] = new Vector3 (normalx, normaly, normalz ); 
+		normals[vertices.Length-4] = new Vector3 (normalx, normaly, normalz ); 
+
+		System.Array.Copy (NewVertices, vertices, vertices.Length);
+		mesh.vertices = vertices;
+		mesh.normals = normals;
+		count += 0.1f;
+	}
+
+	void DefineTriangles (){
+
+		int[] newTriangles = new int[triangles.Length + 18];
+		System.Array.Resize (ref triangles, newTriangles.Length);
+		System.Array.Copy (triangles, newTriangles, newTriangles.Length);
+		int m = vertices.Length ; //number of all vertices
+		int n = 3; //number of added vertices
+					
+		newTriangles[triangles.Length-18] = m - 2*n ;		
+		newTriangles[triangles.Length-17] = m - n; 	
+		newTriangles[triangles.Length-16] = m - 1;		
+		newTriangles[triangles.Length-15] = m - 1; 		
+		newTriangles[triangles.Length-14] = m - 2*n+2; 	
+		newTriangles[triangles.Length-13] = m -2*n; 
+		newTriangles[triangles.Length-12] = m-2*n+2;			
+		newTriangles[triangles.Length-11] = m-1; 			
+		newTriangles[triangles.Length-10] = m-2;		
+		newTriangles[triangles.Length- 9] = m - 2; 		
+		newTriangles[triangles.Length- 8] = m - 2 * n +1;	
+		newTriangles[triangles.Length- 7] = m-2*n+2;			
+		newTriangles[triangles.Length- 6] = m - 2*n+1;		
+		newTriangles[triangles.Length- 5] = m - 2; 	
+		newTriangles[triangles.Length- 4] = m - n;		
+		newTriangles[triangles.Length- 3] = m - n; 		
+		newTriangles[triangles.Length- 2] = m - 2*n; 	
+		newTriangles[triangles.Length- 1]   = m -2*n +1; 
+
+
+		System.Array.Copy (newTriangles, triangles, triangles.Length);
+
+		mesh.triangles = triangles;
+		mesh.Optimize();
+		mesh.RecalculateNormals();
+
+	}
+		
 	// Update is called once per frame
 	void Update () {
-
+		AddNewVertices ();
+		DefineTriangles ();
 	}
 }
