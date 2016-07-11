@@ -7,7 +7,11 @@ public class StarMesh : MonoBehaviour {
 	Vector3[] starPattern;
 	Vector3[] vertices;	
 	int[] triangles;
-	float count = 0.1f;
+	int count = 0;
+	float addz = 0.0f;
+	float addx = 0.0f;
+	float addy = 0.0f;
+	bool Durchlauf = false;
 
 	void Start () {
 
@@ -66,20 +70,26 @@ public class StarMesh : MonoBehaviour {
 		System.Array.Resize (ref vertices, NewVertices.Length);
 		System.Array.Copy (vertices, NewVertices, NewVertices.Length);
 
-		NewVertices [vertices.Length-10] = new Vector3 (0,1,1 + count);
-		NewVertices [vertices.Length-9] = new Vector3 (0.5f,0,1 + count);
-		NewVertices [vertices.Length-8] = new Vector3 (1.5f,0,1 + count);
-		NewVertices [vertices.Length-7] = new Vector3 (0.5f,-1,1 + count);
-		NewVertices [vertices.Length-6] = new Vector3 (1,-2.2f,1 + count);
-		NewVertices [vertices.Length-5] = new Vector3 (0,-1.5f,1 + count);
-		NewVertices [vertices.Length-4] = new Vector3 (-1,-2.2f,1 + count);
-		NewVertices [vertices.Length-3] = new Vector3 (-0.5f,-1,1 + count);
-		NewVertices [vertices.Length-2] = new Vector3 (-1.5f,0,1 + count);
-		NewVertices [vertices.Length-1] = new Vector3 (-0.5f,0,1 + count);
+		if (Durchlauf == false) {
+			addy += 0.1f;
+		} else {
+			addy -= 0.1f;
+		}
+
+		NewVertices [vertices.Length-10] = new Vector3 (0+addx,1+addy,1 + addz);
+		NewVertices [vertices.Length-9] = new Vector3 (0.5f+addx,0+addy,1 + addz);
+		NewVertices [vertices.Length-8] = new Vector3 (1.5f+addx,0+addy,1 + addz);
+		NewVertices [vertices.Length-7] = new Vector3 (0.5f+addx,-1+addy,1 + addz);
+		NewVertices [vertices.Length-6] = new Vector3 (1+addx,-2.2f+addy,1 + addz);
+		NewVertices [vertices.Length-5] = new Vector3 (0+addx,-1.5f+addy,1 + addz);
+		NewVertices [vertices.Length-4] = new Vector3 (-1+addx,-2.2f+addy,1 + addz);
+		NewVertices [vertices.Length-3] = new Vector3 (-0.5f+addx,-1+addy,1 + addz);
+		NewVertices [vertices.Length-2] = new Vector3 (-1.5f+addx,0+addy,1 + addz);
+		NewVertices [vertices.Length-1] = new Vector3 (-0.5f+addx,0+addy,1 + addz);
 
 		System.Array.Copy (NewVertices, vertices, vertices.Length);
 		mesh.vertices = vertices;
-		count += 0.1f;
+		addz += 0.1f;
 	}
 
 	void DefineTriangles (){
@@ -155,8 +165,9 @@ public class StarMesh : MonoBehaviour {
 		System.Array.Copy (newTriangles, triangles, triangles.Length);
 
 		mesh.triangles = triangles;
-		mesh.Optimize();
+
 		mesh.RecalculateNormals();
+		mesh.Optimize();
 
 	}
 
@@ -164,5 +175,13 @@ public class StarMesh : MonoBehaviour {
 	void Update () {
 		AddNewVertices ();
 		DefineTriangles ();
+		if (count == 40) {
+			count = 0;
+			if (Durchlauf == false) {
+				Durchlauf = true;
+			} else
+				Durchlauf = false;
+		}
+		count++;
 	}
 }
