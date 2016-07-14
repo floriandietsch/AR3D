@@ -1,10 +1,16 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
-public class TriangleMeshForVive : MonoBehaviour
+public class TriangleMeshForVive : NetworkBehaviour
 {
+    [SyncVar(hook = "addNewVertexPosition")]
+    Vector3 newPosition;
+
+    [SyncVar(hook = "addNewVertexRotation")]
+    Quaternion vertexRotation;
+
     MeshFilter mf;
     Mesh mesh;
     Vector3[] vertices;
@@ -20,6 +26,8 @@ public class TriangleMeshForVive : MonoBehaviour
     float normaly;
     float normalz;
     // Use this for initialization
+
+    Vector3[] NewVertices;
     void Start()
     {
 
@@ -60,47 +68,56 @@ public class TriangleMeshForVive : MonoBehaviour
 
     }
 
-    void AddNewVertices()
+    void addNewVertexPosition(Vector3 newPosition)
     {
 
-        Vector3[] NewVertices = new Vector3[vertices.Length + 3];
+        NewVertices = new Vector3[vertices.Length + 3];
         System.Array.Resize(ref vertices, NewVertices.Length);
         System.Array.Resize(ref normals, vertices.Length);
         System.Array.Copy(vertices, NewVertices, NewVertices.Length);
 
-        Vector3 position = new Vector3  (addx, addy, addz); //position soll current position von htc vive sein 
+        //Vector3 position = new Vector3  (addx, addy, addz); //position soll current position von htc vive sein 
 
-        NewVertices[vertices.Length - 3] = trianglePattern[0] + position;
-        NewVertices[vertices.Length - 2] = trianglePattern[1] + position;
-        NewVertices[vertices.Length - 1] = trianglePattern[2] + position;
+        NewVertices[vertices.Length - 3] = trianglePattern[0] + newPosition;
+        NewVertices[vertices.Length - 2] = trianglePattern[1] + newPosition;
+        NewVertices[vertices.Length - 1] = trianglePattern[2] + newPosition;
+
         //NewVertices[vertices.Length -3] * Quaternion.operator
       //  NewVertices[vertices.Length - 3] = new Vector3(0 + addx, 1 + addy, 1 + addz);       // add vive.x, vive.y, vive.z
       //  NewVertices[vertices.Length - 2] = new Vector3(-1 + addx, -1 + addy, 1 + addz);     // add vive.x, vive.y, vive.z
       //  NewVertices[vertices.Length - 1] = new Vector3(1 + addx, -1 + addy, 1 + addz);      // add vive.x, vive.y, vive.z
                                                                                             // die 3 Vektoren mit nem Quaternion der vive transformieren 
 
-        //Seiten für die Normalenberechnung
-        side1[0] = NewVertices[vertices.Length - 6] - NewVertices[vertices.Length - 3];
-        side2[0] = NewVertices[vertices.Length - 2] - NewVertices[vertices.Length - 3];
+        ////Seiten für die Normalenberechnung
+        //side1[0] = NewVertices[vertices.Length - 6] - NewVertices[vertices.Length - 3];
+        //side2[0] = NewVertices[vertices.Length - 2] - NewVertices[vertices.Length - 3];
 
-        //Kreuzprodukt
-        normalx = (side1[0].y * side2[0].z) - (side1[0].z - side2[0].y);
-        normaly = (side1[0].z * side2[0].x) - (side1[0].x - side2[0].z);
-        normalz = (side1[0].x * side2[0].y) - (side1[0].y - side2[0].x);
+        ////Kreuzprodukt
+        //normalx = (side1[0].y * side2[0].z) - (side1[0].z - side2[0].y);
+        //normaly = (side1[0].z * side2[0].x) - (side1[0].x - side2[0].z);
+        //normalz = (side1[0].x * side2[0].y) - (side1[0].y - side2[0].x);
 
-        //vertices.Length - 6 ist der start des normals array
-        normals[vertices.Length - 6] = new Vector3(normalx, normaly, normalz);
-        normals[vertices.Length - 5] = new Vector3(normalx, normaly, normalz);
-        normals[vertices.Length - 4] = new Vector3(normalx, normaly, normalz);
+        ////vertices.Length - 6 ist der start des normals array
+        //normals[vertices.Length - 6] = new Vector3(normalx, normaly, normalz);
+        //normals[vertices.Length - 5] = new Vector3(normalx, normaly, normalz);
+        //normals[vertices.Length - 4] = new Vector3(normalx, normaly, normalz);
+
+        //System.Array.Copy(NewVertices, vertices, vertices.Length);
+        //mesh.vertices = vertices;
+        ////	mesh.normals = normals;
+       
+    }
+
+    void addNewVertexRotation(Quaternion vertexRotation)
+    {
+        NewVertices[vertices.Length - 3] = vertexRotation * NewVertices[vertices.Length - 3];
+        NewVertices[vertices.Length - 2] = vertexRotation * NewVertices[vertices.Length - 2];
+        NewVertices[vertices.Length - 1] = vertexRotation * NewVertices[vertices.Length - 1];
 
         System.Array.Copy(NewVertices, vertices, vertices.Length);
         mesh.vertices = vertices;
-        //	mesh.normals = normals;
-       
-
-
-
     }
+
 
     void DefineTriangles()
     {
@@ -142,10 +159,6 @@ public class TriangleMeshForVive : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if button is down
-        AddNewVertices();
-        DefineTriangles();
-
       
     }
 }
